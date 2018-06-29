@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="前端,map,bug," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="发现问题由于在项目中需要前端计算地图区域多边形面积，所以用到了BMapLib.GeoUtils.getPolygonArea()方法。但是在计算项目中矩形面积的时候，居然有时会出现面积是0的情况，并且传入的点数据实际上并没有什么问题。那么问题出现了！究竟是什么原因导致一个矩形的面积会返回为0呢？为了探清这一真相，我们必须深入这个BMap几何运算库里面找到答案。">
+<meta name="keywords" content="前端,map,bug">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BMapLib.GeoUtils计算多边形面积bug调试记录">
+<meta property="og:url" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/index.html">
+<meta property="og:site_name" content="Junior2Ran&#39;s Island">
+<meta property="og:description" content="发现问题由于在项目中需要前端计算地图区域多边形面积，所以用到了BMapLib.GeoUtils.getPolygonArea()方法。但是在计算项目中矩形面积的时候，居然有时会出现面积是0的情况，并且传入的点数据实际上并没有什么问题。那么问题出现了！究竟是什么原因导致一个矩形的面积会返回为0呢？为了探清这一真相，我们必须深入这个BMap几何运算库里面找到答案。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525834961920.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835315179.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835523645.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835965963.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525836183914.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835704666.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835678373.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525836557986.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525843649142.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525843752795.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525844441615.png">
+<meta property="og:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525844685890.png">
+<meta property="og:updated_time" content="2018-06-29T07:42:40.797Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BMapLib.GeoUtils计算多边形面积bug调试记录">
+<meta name="twitter:description" content="发现问题由于在项目中需要前端计算地图区域多边形面积，所以用到了BMapLib.GeoUtils.getPolygonArea()方法。但是在计算项目中矩形面积的时候，居然有时会出现面积是0的情况，并且传入的点数据实际上并没有什么问题。那么问题出现了！究竟是什么原因导致一个矩形的面积会返回为0呢？为了探清这一真相，我们必须深入这个BMap几何运算库里面找到答案。">
+<meta name="twitter:image" content="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/1525834961920.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/"/>
+
+
+
+
+
+  <title>BMapLib.GeoUtils计算多边形面积bug调试记录 | Junior2Ran's Island</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?453de08e094444b5211ad01306e87d45";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <link href="https://afeld.github.io/emoji-css/emoji.css" rel="stylesheet">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Junior2Ran's Island</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Supper Disco Daddy</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://junior2ran.github.io/2018/05/09/fix-BMapLib-GeoUtils-bug/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Junior2Ran">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Junior2Ran's Island">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">BMapLib.GeoUtils计算多边形面积bug调试记录</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-09T14:22:34+08:00">
+                2018-05-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+            <!--noindex-->
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2018/05/09/fix-BMapLib-GeoUtils-bug/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count hc-comment-count" data-xid="2018/05/09/fix-BMapLib-GeoUtils-bug/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+              <!--/noindex-->
+            
+          
+
+          
+          
+             <span id="/2018/05/09/fix-BMapLib-GeoUtils-bug/" class="leancloud_visitors" data-flag-title="BMapLib.GeoUtils计算多边形面积bug调试记录">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数&#58;</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="发现问题"><a href="#发现问题" class="headerlink" title="发现问题"></a>发现问题</h3><p>由于在项目中需要前端计算地图区域多边形面积，所以用到了<code>BMapLib.GeoUtils.getPolygonArea()</code>方法。但是在计算项目中矩形面积的时候，居然有时会出现面积是0的情况，并且传入的点数据实际上并没有什么问题。<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525834961920.png" alt="Alt text"><br>那么问题出现了！究竟是什么原因导致一个矩形的面积会返回为0呢？为了探清这一真相，我们必须深入这个<a href="http://api.map.baidu.com/library/GeoUtils/1.2/src/GeoUtils.js" target="_blank" rel="external">BMap几何运算库</a>里面找到答案。</p>
+<a id="more"></a>
+<h3 id="寻找原因"><a href="#寻找原因" class="headerlink" title="寻找原因"></a>寻找原因</h3><p><img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835315179.png" alt="Alt text"><br>这是<code>BMapLib.GeoUtils.getPolygonArea()</code>这个函数里的一个<code>for</code>循环。。。服了，全是<code>sin</code> <code>cos</code>这些东西，大概是把专门的根据坐标计算几何面积的算法来翻译成编程语言的。深呼吸一口，来看看返回面积为0的原因！<br>首先在<code>for</code>循环结束的地方打一个断点，来看看导致<code>totalArea</code>为0的原因到底是<code>Sum</code> <code>Count</code> <code>Radius</code>哪个参数造成的。<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835523645.png" alt="Alt text"></p>
+<p>果然找到了，<code>Sum</code>是一个<code>NaN</code>，并且同时也看见赋值给<code>Sum</code>的<code>tempSum1</code>和<code>tempSum2</code>都是<code>NaN</code>！而造成<code>tempSum1</code>和<code>tempSum2</code>异常的参数是这个<code>AngleCos</code>参数。<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835965963.png" alt="Alt text"></p>
+<p>OK，在<code>for</code>循环里面找到<code>AngleCos</code>参数这里再打一个断点<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525836183914.png" alt="Alt text"></p>
+<p>找到了，果然是由于它造成的<code>NaN</code>问题<br><img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835704666.png" alt="Alt text"></p>
+<p>这两行<code>AngleCos</code>的计算代码如下<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">AngleCos = (AHtangent * ALtangent + BHtangent * BLtangent + CHtangent * CLtangent) / (<span class="built_in">Math</span>.sqrt(AHtangent * AHtangent + BHtangent * BHtangent + CHtangent * CHtangent) * <span class="built_in">Math</span>.sqrt(ALtangent * ALtangent + BLtangent * BLtangent + CLtangent * CLtangent));</div><div class="line"></div><div class="line">AngleCos = <span class="built_in">Math</span>.acos(AngleCos);</div></pre></td></tr></table></figure></p>
+<p>把<code>AHtangent</code> <code>ALtangent</code> <code>BHtangent</code>  <code>BLtangent</code> <code>CHtangent</code> <code>CLtangent</code>这四个参数分别存参数为<code>temp1</code>~<code>temp6</code>，然后计算，发现是在<code>AngleCos = Math.acos(AngleCos);</code>这一步翻水了。。。<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525835678373.png" alt="Alt text"></p>
+<p>那么查一下这个<code>Math.acos()</code>方法吧，果然。。。问题就在这儿了。。。第一步运算结果为<code>-1.000000000000002</code>导致传入第二步运算的时候超过了<code>-1.0</code>的范围<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525836557986.png" alt="Alt text"></p>
+<h3 id="解决问题"><a href="#解决问题" class="headerlink" title="解决问题"></a>解决问题</h3><p>既然找到了问题，就想办法解决一下吧。<br>首先，问题定位这个<code>-1.0000000000000002</code>上面，程序员的直觉告诉我这个多出来的<code>-0.000...002</code>很有可能是在浮点数计算中产生的误差，有可能实际返回结果应该是<code>-1.0</code>而已。但这只是一个猜测，并不能这么草率的强行改过来，所以需要具体研究看一下这个<code>AngleCos</code>到底有什么用，预期结果究竟是不是<code>-1.0</code>。<br>研究这个参数在算法中有什么作用并没有什么帮助，反正我也不打算重新写一个算发出来（不是数学系大神）。。。所以可以判断一下是不是由于浮点数精度丢失导致的就可以了，判断方法就是：自己再手算一遍！</p>
+<p>半个多小时过去了，说实话，手算简直在找虐。。。<strong>但是，真相出来了，就是由于浮点数精度丢失导致的</strong>。我甚至后来又用js算了一遍，发现最后的结果是<code>(-2.5232865177698275e-7)/(2.523286517769827e-7)</code>唉。。。</p>
+<p>所以解决方案非常简单，源文件里加上一行代码<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525843649142.png" alt="Alt text"><br>搞定！<br>再次运行获得多边形面积的函数，再也不会出现结果为<code>0</code>的错误了。<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525843752795.png" alt="Alt text"></p>
+<h3 id="总结与发散"><a href="#总结与发散" class="headerlink" title="总结与发散"></a>总结与发散</h3><p>手算了半个多小时，最后只能感叹计算机的<strong>计算</strong>能力并不可靠。。。因为和C/JAVA等其他语言不一样，C和JAVA的<code>%f</code>是小数后六位，但是在JS中，预设是最精确的输出，比如十进制的<code>0.7</code>很简单，但是二进制是循环小数<code>0.10110011001100110...</code>所以JS连简单的浮点数加法都全是坑😤😤😤<br>说到这里，必须要皮一下<br><img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525844441615.png" alt="Alt text"></p>
+<p>对了，上面说到最后导致出错的结果是<code>(-2.5232865177698275e-7)/(2.523286517769827e-7)</code>，前后两个数的绝对值只差了<code>5.0e-23</code>，我们将前后两个数相加，看看会不会得到<code>5.0e-23</code>这个数呢？<img src="/2018/05/09/fix-BMapLib-GeoUtils-bug/1525844685890.png" alt="Alt text"></p>
+<p>😵😵😵😵意料之中。。。卒。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/前端/" rel="tag"># 前端</a>
+          
+            <a href="/tags/map/" rel="tag"># map</a>
+          
+            <a href="/tags/bug/" rel="tag"># bug</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/28/react-router-params-attention/" rel="next" title="react-router 传参注意事项">
+                <i class="fa fa-chevron-left"></i> react-router 传参注意事项
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="hypercomments_widget"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="Junior2Ran" />
+          <p class="site-author-name" itemprop="name">Junior2Ran</p>
+           
+              <p class="site-description motion-element" itemprop="description">学无止境，保持充电。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/junior2ran/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                    
+                      GitHub
+                    
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="mailto:hdr01@126.com" target="_blank" title="E-Mail">
+                  
+                    <i class="fa fa-fw fa-envelope"></i>
+                  
+                    
+                      E-Mail
+                    
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/hesuddenly/" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                    
+                      Weibo
+                    
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              好友的博客
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="https://andy-sheng.github.io/" title="Andy Sheng" target="_blank">Andy Sheng</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#发现问题"><span class="nav-number">1.</span> <span class="nav-text">发现问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#寻找原因"><span class="nav-number">2.</span> <span class="nav-text">寻找原因</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解决问题"><span class="nav-number">3.</span> <span class="nav-text">解决问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结与发散"><span class="nav-number">4.</span> <span class="nav-text">总结与发散</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Junior2Ran</span>
+
+  
+</div>
+
+
+  <div class="powered-by">
+    由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+  </div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">
+    主题 &mdash;
+    <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+      NexT.Mist
+    </a>
+  </div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+		<script type="text/javascript">
+		_hcwp = window._hcwp || [];
+
+		_hcwp.push({widget:"Bloggerstream", widget_id: 94900, selector:".hc-comment-count", label: "{\%COUNT%\}" });
+
+		
+		_hcwp.push({widget:"Stream", widget_id: 94900, xid: "2018/05/09/fix-BMapLib-GeoUtils-bug/"});
+		
+
+		(function() {
+		if("HC_LOAD_INIT" in window)return;
+		HC_LOAD_INIT = true;
+		var lang = (navigator.language || navigator.systemLanguage || navigator.userLanguage || "en").substr(0, 2).toLowerCase();
+		var hcc = document.createElement("script"); hcc.type = "text/javascript"; hcc.async = true;
+		hcc.src = ("https:" == document.location.protocol ? "https" : "http")+"://w.hypercomments.com/widget/hc/94900/"+lang+"/widget.js";
+		var s = document.getElementsByTagName("script")[0];
+		s.parentNode.insertBefore(hcc, s.nextSibling);
+		})();
+		</script>
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.4.js"></script>
+  <script>AV.initialize("IlY5hEIrhohKA5Yoz7uboAUd-gzGzoHsz", "h6lofg0FUcEu0JLSDKPdasAA");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
